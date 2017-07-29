@@ -1,0 +1,91 @@
+//ARDUINO HOCAM MASA SAATİ UYGULAMASI
+//www.youtube.com/ArduinoHocam
+
+#include <Wire.h>  // I2C
+#include <Time.h>  // Time Manipulation
+#include <DS1307RTC.h>  // DS1307 RTC
+#include <LCD5110_Graph.h>
+#include <dht11.h>
+#define DHT11PIN 2
+
+dht11 DHT11;
+LCD5110 myGLCD(8, 9, 10, 11, 12);
+
+char timebuf[10];  // Time
+char datebuf[10];  // Date
+
+int year2digit;  // 2 digit year
+int year4digit;  // 4 digit year
+extern uint8_t MediumNumbers[];
+
+extern uint8_t SmallFont[];
+extern uint8_t s[];
+extern uint8_t nem[];
+
+
+void setup() {
+  myGLCD.InitLCD();
+  Serial.begin(9600);
+}
+
+void loop() {
+
+  int x = DHT11.read(DHT11PIN);
+
+  tmElements_t tm;
+
+
+  if (RTC.read(tm)) {
+
+    myGLCD.setFont(SmallFont);
+    myGLCD.printNumI(tm.Day, 20, 17); myGLCD.print("/", 33, 17); myGLCD.printNumI(tm.Month, 40, 17); myGLCD.print("/", 46, 17); myGLCD.printNumI(year2digit, 53, 17);
+
+    myGLCD.update();
+
+    year2digit = tm.Year - 30;  // 2 digit year variable
+    //   year4digit = tm.Year + 1970;  // 4 digit year variable
+    myGLCD.setFont(MediumNumbers);
+    myGLCD.printNumI(tm.Hour, 12, 1);
+
+    ceviri(tm.Minute);
+    myGLCD.update();
+    myGLCD.setPixel(40, 10); myGLCD.setPixel(40, 11); myGLCD.setPixel(41, 10); myGLCD.setPixel(41, 11);
+    myGLCD.setPixel(40, 6); myGLCD.setPixel(40, 5); myGLCD.setPixel(41, 6); myGLCD.setPixel(41, 5);
+    myGLCD.update();
+
+    myGLCD.drawBitmap(49, 29, nem, 15, 18);
+    myGLCD.printNumI(DHT11.humidity, 58, 30);
+    myGLCD.drawBitmap(-4, 27, s, 20, 20);
+    myGLCD.printNumI(DHT11.temperature, 16, 30);
+
+
+    delay(1000);
+
+    myGLCD.clrPixel(40, 10); myGLCD.clrPixel(40, 11); myGLCD.clrPixel(41, 10); myGLCD.clrPixel(41, 11);
+    myGLCD.clrPixel(40, 6); myGLCD.clrPixel(40, 5); myGLCD.clrPixel(41, 6); myGLCD.clrPixel(41, 5);
+
+    myGLCD.update();
+    myGLCD.drawRoundRect(0, 26, 83, 47);
+    myGLCD.drawRoundRect(0, 25, 83, 0);
+    myGLCD.update();
+    delay(1000);
+  }
+}
+
+void ceviri(int number) {
+  tmElements_t tm;
+  if (number >= 0 && number < 10)
+  {
+    myGLCD.setFont(MediumNumbers);
+    myGLCD.print("0", 45, 1);
+    if (RTC.read(tm)) {
+      myGLCD.printNumI(tm.Minute, 57, 1);
+      myGLCD.update();
+    }
+  }
+  else {
+    if (RTC.read(tm)) {
+      myGLCD.printNumI(tm.Minute, 45, 1); myGLCD.update();
+    }
+  }
+}
